@@ -530,7 +530,47 @@ class CnvTranslator(_Translator):
         super().__init__(data_proxy, default_assembly_name, identify)
         self.from_translators = {
             "hgvs": self._from_hgvs,
+            "pgxseg": self._from_pgxseg
         }
+
+    def _from_pgxseg(
+        self, pgxseg_line: str, **kwargs
+    ) -> models.CopyNumberChange | models.CopyNumberCount | None:
+        """Parse pgxseg into a VRS CNV Object
+
+        https://docs.progenetix.org/file-formats/
+
+        kwargs:
+            copies: The number of copies to use. If provided will return a
+                CopyNumberCount
+            copy_change: Copy change. If not provided, default is EFO:0030067 for
+                deletions and EFO:0030070 for duplications
+        """
+
+        biosample_id, reference_name, start, end, __other__ = pgxseg_line.split("\t", 4)
+
+        if not ":" in reference_name:
+            reference_name = f"GRCh38:{reference_name}"
+
+        refget_accession = self.data_proxy.derive_refget_accession(reference_name)
+        if not refget_accession:
+            return None
+
+        location = models.SequenceLocation(
+            sequenceReference=models.SequenceReference(
+                refgetAccession=refget_accession
+            ),
+            start=start,
+            end=end,
+        )
+
+        copy_change = kwargs.get("copy_change")
+        cnv = models.CopyNumberChange(
+            location=location,
+            copyChange=copy_change,
+        )
+
+        return self._post_process_imported_cnv(cnv)
 
     def _from_hgvs(
         self, hgvs_dup_del_expr: str, **kwargs

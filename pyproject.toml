@@ -34,7 +34,8 @@ keywords = [
     "variation"
 ]
 requires-python = ">=3.10"
-dynamic = ["version"]
+# dynamic = ["version"]
+version = "2.1.4+byconized"
 dependencies = [
     "pydantic~=2.1",
     "bioutils",
