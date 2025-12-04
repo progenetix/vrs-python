@@ -534,20 +534,18 @@ class CnvTranslator(_Translator):
         }
 
     def _from_pgxseg(
-        self, pgxseg_line: str, **kwargs
-    ) -> models.CopyNumberChange | models.CopyNumberCount | None:
+        self, pgxseg: str, **kwargs
+    ) -> models.CopyNumberChange | None:
         """Parse pgxseg into a VRS CNV Object
 
         https://docs.progenetix.org/file-formats/
 
         kwargs:
-            copies: The number of copies to use. If provided will return a
-                CopyNumberCount
             copy_change: Copy change. If not provided, default is EFO:0030067 for
                 deletions and EFO:0030070 for duplications
         """
 
-        biosample_id, reference_name, start, end, __other__ = pgxseg_line.split("\t", 4)
+        biosample_id, reference_name, start, end, __other__ = re.split(r"(?:\t)|(?:::)", pgxseg, maxsplit=4)
 
         if not ":" in reference_name:
             reference_name = f"GRCh38:{reference_name}"
